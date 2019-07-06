@@ -1,0 +1,2 @@
+Finetune BERT for the there-is classification task.
+The files run_classifier.py and run_classifier_dataset_utils.py are adapted versions of the ones in the https://github.com/huggingface/pytorch-pretrained-BERT repository. To use the finetuning, copy those files into the pytorch-pretrained-BERT/example/.
