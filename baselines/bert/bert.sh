@@ -1,11 +1,11 @@
-export DATA_DIR=../../../data/bert_classify_thereis/
+export DATA_DIR=../../../data/bert_classify_thereis_5caps/
 export OUTPUT_DIR=../../../logs/bert_finetune/
 
-python3 ../../bert_baseline/pytorch-pretrained-BERT/example/run_classifier.py \
+python3 ../../../bert_baseline/pytorch-pretrained-BERT/examples/run_classifier.py \
   --task_name thereis \
   --do_train \
   --do_eval \
-  --do_lowercase \
+  --do_lower_case \
   --data_dir $DATA_DIR \
   --bert_model bert-base-uncased \
   --max_seq_length 128 \

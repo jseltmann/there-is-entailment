@@ -1,6 +1,5 @@
 import pandas as pd
 import numpy as np
-
 import configparser
 import os
 import random
@@ -9,6 +8,8 @@ import sys
 from copy import deepcopy
 import pickle
 import random
+import csv
+import codecs
 
 config_path = os.environ.get('VISCONF')
 if not config_path:
@@ -202,7 +203,9 @@ def preproc_bert_baseline(data_filename, bert_data_path, num_captions=5):
         tsv_filename = bert_data_path + split_name[:-5] + ".tsv"
 
         with open(tsv_filename, "w") as tsv_file:
-            tsv_file.write("index\tcaption\tobject\tentailment\n")
+            tsv_writer = csv.writer(tsv_file, delimiter='\t', quotechar=None, escapechar="\\")
+            #tsv_file.write("index\tcaption\tobject\tentailment\n")
+            tsv_writer.writerow(["index", "caption", "object", "entailment"])
 
             counter = 0
             for index, (image_id, obj, entailment) in enumerate(examples):
@@ -214,14 +217,17 @@ def preproc_bert_baseline(data_filename, bert_data_path, num_captions=5):
                 caps_to_use = caps[:num_captions]
 
                 for cap in caps_to_use:
-                    line = (str(counter) + "\t"
-                           + cap + "\t"
-                           + obj + "\t"
-                           + str(entailment) + "\n")
-                    tsv_file.write(line)
+                    #line = (str(counter) + "\t"
+                    #       + cap + "\t"
+                    #       + obj + "\t"
+                    #       + str(entailment) + "\n")
+                    #tsv_file.write(line)
+                    tsv_writer.writerow([counter, cap, obj, entailment])
                     counter += 1
                 if index % 10000 == 0:
                     print("processed", index, split_name[:-5], "examples")
+                if index == 100:
+                    break
         print("wrote", split_name[:-5], "file")
 
 
