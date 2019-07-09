@@ -198,14 +198,14 @@ def preproc_bert_baseline(data_filename, bert_data_path, num_captions=5):
     with open(data_filename, "rb") as data_file:
         data = pickle.load(data_file)
 
-    for split_name, examples in data.items:
+    for split_name, examples in data.items():
         tsv_filename = bert_data_path + split_name[:-5] + ".tsv"
 
         with open(tsv_filename, "w") as tsv_file:
             tsv_file.write("index\tcaption\tobject\tentailment\n")
 
-            index = 0
-            for image_id, obj, entailment in examples:
+            counter = 0
+            for index, (image_id, obj, entailment) in enumerate(examples):
                 #extract caption
                 visgen_rows = visgencocap_regdf[visgencocap_regdf['image_id'] == image_id]
                 coco_id = int(visgen_rows.sample()["coco_id"].values[0])
@@ -214,12 +214,15 @@ def preproc_bert_baseline(data_filename, bert_data_path, num_captions=5):
                 caps_to_use = caps[:num_captions]
 
                 for cap in caps_to_use:
-                    line = str(index) + "\t"
-                        + cap + "\t"
-                        + obj + "\t"
-                        + str(entailment) + "\n"
+                    line = (str(counter) + "\t"
+                           + cap + "\t"
+                           + obj + "\t"
+                           + str(entailment) + "\n")
                     tsv_file.write(line)
-                    index += 1
+                    counter += 1
+                if index % 10000 == 0:
+                    print("processed", index, split_name[:-5], "examples")
+        print("wrote", split_name[:-5], "file")
 
 
 preproc_bert_baseline("../data/binary_class.pkl",
