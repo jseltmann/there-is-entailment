@@ -175,6 +175,54 @@ def create_binary_dataset(data_filename, sim_rank=0, train_split=[0.8,0.1,0.1]):
     with open(data_filename, "wb") as data_file:
         pickle.dump(data, data_file)
 
+def preproc_bert_baseline(data_filename, bert_data_path, num_captions=5):
+    """
+    Write the data as tsv files, so that it can be used for BERT finetuning.
+
+    Parameters
+    ----------
+    data_filename: str
+        Path to the file created by create_binary_dataset().
+    bert_data_path: str
+        Directory into which to put the tsv files.
+    num_captions: int
+        Number of captions per image to include in data.
+        (Since COCO contains five captions per image.)
+    """
+
+    if num_captions > 5:
+        num_captions = 5
+    if num_captions < 1:
+        num_captions = 1
+
+    with open(data_filename, "rb") as data_file:
+        data = pickle.load(data_file)
+
+    for split_name, examples in data.items:
+        tsv_filename = bert_data_path + split_name[:-5] + ".tsv"
+
+        with open(tsv_filename, "w") as tsv_file:
+            tsv_file.write("index\tcaption\tobject\tentailment\n")
+
+            index = 0
+            for image_id, obj, entailment in examples:
+                #extract caption
+                visgen_rows = visgencocap_regdf[visgencocap_regdf['image_id'] == image_id]
+                coco_id = int(visgen_rows.sample()["coco_id"].values[0])
+                this_df = df["cococapdf"]
+                caps = this_df[this_df['image_id'] == coco_id]['caption'].values
+                caps_to_use = caps[:num_captions]
+
+                for cap in caps_to_use:
+                    line = str(index) + "\t"
+                        + cap + "\t"
+                        + obj + "\t"
+                        + str(entailment) + "\n"
+                    tsv_file.write(line)
+                    index += 1
 
 
-create_binary_dataset("../data/binary_class.pkl", sim_rank=10, train_split=[0.8,0.1,0.1])
+preproc_bert_baseline("../data/binary_class.pkl",
+                      "../data/bert_classify_thereis_5caps/",
+                      num_captions = 5)
+#create_binary_dataset("../data/binary_class.pkl", sim_rank=10, train_split=[0.8,0.1,0.1])
