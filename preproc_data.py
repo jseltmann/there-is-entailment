@@ -201,7 +201,7 @@ def preproc_bert_baseline(data_filename, bert_data_path, num_captions=5):
 
     for split_name, examples in data.items():
         tsv_filename = bert_data_path + split_name[:-5] + ".tsv"
-
+        
         with open(tsv_filename, "w") as tsv_file:
             tsv_writer = csv.writer(tsv_file, delimiter='\t', quotechar=None, escapechar="\\")
             #tsv_file.write("index\tcaption\tobject\tentailment\n")
@@ -210,28 +210,94 @@ def preproc_bert_baseline(data_filename, bert_data_path, num_captions=5):
             counter = 0
             for index, (image_id, obj, entailment) in enumerate(examples):
                 #extract caption
+                if len(obj.split('\x00')) > 1:
+                    obj = "".join(obj.split('\x00'))
                 visgen_rows = visgencocap_regdf[visgencocap_regdf['image_id'] == image_id]
                 coco_id = int(visgen_rows.sample()["coco_id"].values[0])
                 this_df = df["cococapdf"]
                 caps = this_df[this_df['image_id'] == coco_id]['caption'].values
+                for cap in caps:
+                    if len(cap.split("\x00")) > 1:
+                        cap = "".join(cap.split('\x00'))
                 caps_to_use = caps[:num_captions]
 
+
                 for cap in caps_to_use:
-                    #line = (str(counter) + "\t"
-                    #       + cap + "\t"
-                    #       + obj + "\t"
-                    #       + str(entailment) + "\n")
-                    #tsv_file.write(line)
                     tsv_writer.writerow([counter, cap, obj, entailment])
                     counter += 1
                 if index % 10000 == 0:
                     print("processed", index, split_name[:-5], "examples")
-                if index == 100:
-                    break
         print("wrote", split_name[:-5], "file")
 
 
-preproc_bert_baseline("../data/binary_class.pkl",
-                      "../data/bert_classify_thereis_5caps/",
-                      num_captions = 5)
-#create_binary_dataset("../data/binary_class.pkl", sim_rank=10, train_split=[0.8,0.1,0.1])
+def create_generation_dataset(data_path, train_split=[0.8,0.1,0.1]):
+    """
+    Create a datafile for the caption-to-there-is 
+    entailment as generation task.
+    
+    Parameters:
+    -----------
+    data_path : str
+        Directory to which to save the data.
+    train_split : [float]
+        Fractions of data to use for train, dev, and test set.
+    """
+    vgiis = set()
+    i = 0
+    examples = []
+
+    for _, row in visgencocap_regdf.iterrows():
+        vgii = row['image_id']
+        if vgii in vgiis:
+            continue
+
+        if i == 10:
+            print("10")
+        if i == 100:
+            print("100")
+        if i % 5000 == 0:
+            print("processed", i, "rows ...")
+        vgiis.add(vgii)
+        i += 1
+
+        cocoii = row['coco_id']
+
+        objects = set(df['vgobjdf'][df['vgobjdf']['image_id'] == vgii]['name'].tolist())
+        
+        this_df = df["cococapdf"]
+        caps = this_df[this_df['image_id'] == cocoii]['caption'].values
+        
+
+        curr_hyps = (caps, objects)
+        examples.append(curr_hyps)
+        
+
+
+    print("found hypotheses")
+
+    num_rows = len(examples)
+    train_len = int(train_split[0] * num_rows)
+    dev_len = int(train_split[1] * num_rows)
+
+    train_hyps = examples[:train_len]
+    np.random.shuffle(train_hyps)
+    dev_hyps = examples[train_len:(train_len+dev_len)]
+    np.random.shuffle(dev_hyps)
+    test_hyps = examples[train_len+dev_len:]
+    np.random.shuffle(test_hyps)
+
+    #write train examples
+    for name, split in zip(["train","dev","test"],[train_hyps, dev_hyps, test_hyps]):
+        tsv_filename = os.path.join(data_path, name + ".tsv")
+        with open(tsv_filename, "w") as tsv_file:
+            tsv_writer = csv.writer(tsv_file, delimiter='\t', quotechar=None, escapechar="\\")
+            tsv_writer.writerow(["index","caption","objects"])
+
+            index = 0
+            for caps, objs in split:
+                for cap in caps:
+                    tsv_writer.writerow([index, cap, objs])
+                    index += 1
+        print("wrote", name, "examples")
+
+create_generation_dataset("../data/generation_data")
