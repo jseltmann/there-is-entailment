@@ -11,6 +11,8 @@ import random
 import csv
 import codecs
 
+random.seed(0)
+
 config_path = os.environ.get('VISCONF')
 if not config_path:
     # try default location, if not in environment
@@ -200,7 +202,7 @@ def preproc_bert_baseline(data_filename, bert_data_path, num_captions=5):
         data = pickle.load(data_file)
 
     for split_name, examples in data.items():
-        tsv_filename = bert_data_path + split_name[:-5] + ".tsv"
+        tsv_filename = os.path.join(bert_data_path, split_name[:-5] + ".tsv")
         
         with open(tsv_filename, "w") as tsv_file:
             tsv_writer = csv.writer(tsv_file, delimiter='\t', quotechar=None, escapechar="\\")
@@ -300,4 +302,49 @@ def create_generation_dataset(data_path, train_split=[0.8,0.1,0.1]):
                     index += 1
         print("wrote", name, "examples")
 
-create_generation_dataset("../data/generation_data")
+
+def create_word_ind_dict(data_path):
+    """
+    Make a numeric index for every(!) word in the data,
+    to be used in the LSTM.
+
+    Parameters
+    ----------
+    data_path : str
+        Path containing csv files created by create_generation_dataset or preproc_bert_baseline.
+        The resulting word indices will also be saved there.
+    """
+    vocab = set()
+    vocab.add("<START>")
+    vocab.add("<END>")
+    vocab.add("<UNK>")
+    vocab.add("<PAD>")
+ 
+    for name in ["train", "dev", "test"]:
+        tsv_filename = os.path.join(data_path, name + ".tsv")
+        with open(tsv_filename, "w") as tsv_file:
+            tsv_reader = csv.reader(tsv_file, delimiter="\t", quotechar=None, escapechar="\\")
+            i = 0
+            for line in tsv_reader:
+                if i == 0:
+                    continue
+                for word in nltk.word_tokenize(line[1]):
+                    vocab.add(word.lower())
+                for word in nltk.word_tokenize(line[2]):
+                    vocab.add(word.lower())
+                if i % 100000 == 0 or i == 1000:
+                    print("processed", i, "examples")
+                i += 1
+
+    word2ind = dict()
+    ind2word = dict()
+    for ind, word in enumerate(vocab):
+        word2ind[word] = ind
+        ind2word[ind] = word
+
+    ind_path = os.path.join(data_path, "word_inds.pkl")
+    with open(ind_path, "wb") as ind_file:
+        pickle.dump(ind_file, (word2ind, ind2word))
+
+#create_word_ind_dict("../data/bert_classify_thereis_5caps")
+preproc_bert_baseline("../data/binary_class.pkl", "../data/bert_classify_thereis_5caps", num_captions=5)
