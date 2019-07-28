@@ -1,0 +1,29 @@
+Fine tuned Model Name: bert_classify_1epoch_seed0
+Task :  thereis 
+Evaluation on Harder dataset Results: 
+
+Dataset : Object seen in the Caption:
+
+07/28/2019 11:40:08 - INFO - run_classifier_dataset_utils -   Writing example 0 of 5691
+07/28/2019 11:40:09 - INFO - __main__ -     Saving eval features into cached file /data/entailment_data_analysis/obj_in_caption/cap_seen/dev_bert_classify_1epoch_seed0_128_thereis
+07/28/2019 11:40:09 - INFO - __main__ -   ***** Running evaluation *****
+07/28/2019 11:40:09 - INFO - __main__ -     Num examples = 5691
+07/28/2019 11:40:09 - INFO - __main__ -     Batch size = 8
+Evaluating: 100%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 712/712 [00:27<00:00, 26.25it/s]
+07/28/2019 11:40:36 - INFO - __main__ -   ***** Eval results *****
+07/28/2019 11:40:36 - INFO - __main__ -     acc = 0.9502723598664559
+07/28/2019 11:40:36 - INFO - __main__ -     eval_loss = 0.1727024301195915
+07/28/2019 11:40:36 - INFO - __main__ -     global_step = 0
+07/28/2019 11:40:36 - INFO - __main__ -     loss = None
+
+Dataset : Object NOT seen in the Caption:
+
+07/28/2019 11:44:11 - INFO - __main__ -   ***** Running evaluation *****
+07/28/2019 11:44:11 - INFO - __main__ -     Num examples = 139637
+07/28/2019 11:44:11 - INFO - __main__ -     Batch size = 8
+Evaluating: 100%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 17455/17455 [11:01<00:00, 26.38it/s]
+07/28/2019 11:55:14 - INFO - __main__ -   ***** Eval results *****
+07/28/2019 11:55:14 - INFO - __main__ -     acc = 0.8071284831384232
+07/28/2019 11:55:14 - INFO - __main__ -     eval_loss = 0.42638475056369507
+07/28/2019 11:55:14 - INFO - __main__ -     global_step = 0
+07/28/2019 11:55:14 - INFO - __main__ -     loss = None
