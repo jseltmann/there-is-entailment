@@ -16,7 +16,7 @@ random.seed(0)
 config_path = os.environ.get('VISCONF')
 if not config_path:
     # try default location, if not in environment
-    default_path_to_config = '../../SwP/clp-vision/Config/gpu_potsdam.cfg'
+    default_path_to_config = '../../../SwP/clp-vision/Config/gpu_potsdam.cfg'
     if os.path.isfile(default_path_to_config):
         config_path = default_path_to_config
 
@@ -38,7 +38,7 @@ from wac_utils import create_word2den, is_relational
 sys.path.append(dsgv_home + '/Preproc')
 from sim_preproc import load_imsim, n_most_sim
 
-sys.path.append('../../SwP/sempix/Common')
+sys.path.append('../../../SwP/sempix/Common')
 from data_utils import load_dfs, plot_rel_by_relid, get_obj_bb, compute_distance_objs
 from data_utils import get_obj_key, compute_relpos_relargs_row, get_all_predicate
 from data_utils import compute_distance_relargs_row, get_rel_type, get_rel_instances
@@ -322,11 +322,12 @@ def create_word_ind_dict(data_path):
  
     for name in ["train", "dev", "test"]:
         tsv_filename = os.path.join(data_path, name + ".tsv")
-        with open(tsv_filename, "w") as tsv_file:
+        with open(tsv_filename, "r") as tsv_file:
             tsv_reader = csv.reader(tsv_file, delimiter="\t", quotechar=None, escapechar="\\")
             i = 0
             for line in tsv_reader:
                 if i == 0:
+                    i += 1
                     continue
                 for word in nltk.word_tokenize(line[1]):
                     vocab.add(word.lower())
@@ -346,5 +347,5 @@ def create_word_ind_dict(data_path):
     with open(ind_path, "wb") as ind_file:
         pickle.dump(ind_file, (word2ind, ind2word))
 
-#create_word_ind_dict("../data/bert_classify_thereis_5caps")
-preproc_bert_baseline("../data/binary_class.pkl", "../data/bert_classify_thereis_5caps", num_captions=5)
+#create_word_ind_dict("../../data/bert_classify_thereis_5caps")
+preproc_bert_baseline("../../data/binary_class.pkl", "../../data/bert_classify_thereis_5caps", num_captions=5)
