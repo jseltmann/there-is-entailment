@@ -84,4 +84,15 @@ print("\nTotal dataset Examples with Object in the caption : ", total_obj_in_cap
 print("\nTotal dataset Examples where object is NOT in the caption :",total_obj_NOT_in_caption )
 print("\nTotal Examples", Total)
 
-
+#Training examples which HAD object Mentioned in the Caption :  45802
+#Training examples which DO NOT have object Mentioned in the Caption :  1122135
+#Training Examples with Object in Caption % :  0.03921615635089906
+#Test examples which HAD object Mentioned in the Caption :  5385
+#Test examples which DO NOT have object Mentioned in the Caption :  140604
+#Test Examples with Object in Caption % :  0.03688634075170047
+#Dev examples which HAD object Mentioned in the Caption :  5708
+#Dev examples which DO NOT have object Mentioned in the Caption :  140284
+#Dev Examples with Object in Caption % :  0.03909803276891884
+#Total dataset Examples with Object in the caption :  0.03897136688498943
+#Total dataset Examples where object is NOT in the caption : 0.9610286331150105
+#Total Examples 1459918
