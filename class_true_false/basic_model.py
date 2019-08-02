@@ -21,18 +21,13 @@ class BaseLSTM(nn.Module):
 
     def forward(self, caption, obj):
         _, (h_cap, _) = self.caption_lstm(caption)
-        #print(h_cap.size())
         _, (h_obj, _) = self.object_lstm(obj)
-        #print(h_obj.size())
 
         # h_cap is tuple, since bidirectional lstm
         h_cap = torch.stack((h_cap[0], h_cap[1]), dim=1)
-        #print(h_cap.size())
         h_cap = h_cap.reshape(-1, 2 * self.hidden_size)
-        #print(h_cap.size())
         h_obj = torch.stack((h_obj[0], h_obj[1]), dim=1)
         h_obj = h_obj.reshape(-1, 2 * self.hidden_size) # (BATCH_SIZE * HIDDEN_SIZE)
-        #print(h_obj.size())
 
         h_combined = torch.cat([h_cap, h_obj], 1)
 

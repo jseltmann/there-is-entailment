@@ -8,11 +8,11 @@ from basic_model import BaseLSTM
 
 MAX_LEN = 25
 BATCH_SIZE = 64
-NUM_EPOCHS = 1
+NUM_EPOCHS = 3
 LEARNING_RATE = 1e-4
 
 INPUT_SIZE = 1
-HIDDEN_SIZE = 100
+HIDDEN_SIZE = 25#100
 
 PAD_INDEX = 1889
 
@@ -89,13 +89,15 @@ def load_data(train_filename, word_ind_filename, batch_size=64):
     return caps_batched, objs_batched, labels_batched
 
 
-#caps, objs, labels = load_data("../../data/bert_classify_thereis_5caps_seed0/train.tsv",
+#caps, objs, labels = load_data("../../data/bert_classify_thereis_5caps_seed0/dev.tsv",
 #                           "../../data/bert_classify_thereis_5caps_seed0/word_inds.pkl",
 #                           batch_size=BATCH_SIZE)
-#with open("../../data/bert_classify_thereis_5caps_seed0/lstm_preprocessed_train.pkl", "wb") as processed_file:
+#with open("../../data/bert_classify_thereis_5caps_seed0/lstm_preprocessed_dev.pkl", "wb") as processed_file:
 #    pickle.dump((caps, objs, labels), processed_file)
 with open("../../data/bert_classify_thereis_5caps_seed0/lstm_preprocessed_train.pkl", "rb") as processed_file:
     caps, objs, labels = pickle.load(processed_file)
+
+num_batches = len(caps)
 
 print("loaded data")
 
@@ -103,7 +105,6 @@ model = BaseLSTM(INPUT_SIZE, HIDDEN_SIZE, BATCH_SIZE)
 
 loss_fn = torch.nn.MSELoss(size_average=False)
 optimizer = torch.optim.Adam(model.parameters(), lr=LEARNING_RATE)
-num_batches = len(cap_batch)
 
 for epoch in range(NUM_EPOCHS):
 
@@ -130,8 +131,8 @@ for epoch in range(NUM_EPOCHS):
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
-        if i == 5000:
+        if i % 5000 == 0:
             print("epoch:", epoch, "batch:", i, "out of", num_batches)
         i += 1
 
-torch.save(model.state_dict(), "../../logs/base_lstm_classification/model_2019-07.29.pt")
+torch.save(model.state_dict(), "../../logs/base_lstm_classification/models/base_2019-08-01-hidden25.pt")
