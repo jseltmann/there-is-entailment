@@ -86,6 +86,6 @@ def evaluate_base_lstm(hyp_params, model_path, dev_path, log_path):
         
         
 evaluate_base_lstm([1,25,1], 
-                   "../../logs/base_lstm_classification/models/base_2019-08-01-hidden25.pt", 
+                   "../../logs/base_lstm_classification/models/base_2019-08-02-2lin.pt", 
                    "../../data/bert_classify_thereis_5caps_seed0/lstm_preprocessed_dev.pkl", 
-                   "../../logs/base_lstm_classification/eval_results/2019-08-01-hidden25_easy_dev.log")
+                   "../../logs/base_lstm_classification/eval_results/2019-08-01-2lin_easy_dev.log")

@@ -17,7 +17,8 @@ class BaseLSTM(nn.Module):
                                    self.hidden_size,
                                    bidirectional=True)
 
-        self.linear = nn.Linear(4 * self.hidden_size, 2)
+        self.linear1 = nn.Linear(4 * self.hidden_size, 4 * self.hidden_size)
+        self.linear2 = nn.Linear(4 * self.hidden_size, 2)
 
     def forward(self, caption, obj):
         _, (h_cap, _) = self.caption_lstm(caption)
@@ -31,7 +32,8 @@ class BaseLSTM(nn.Module):
 
         h_combined = torch.cat([h_cap, h_obj], 1)
 
-        out = self.linear(h_combined)
+        l1 = self.linear1(h_combined)
+        out = self.linear2(l1)
 
         return out
 
