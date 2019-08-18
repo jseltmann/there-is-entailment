@@ -10,74 +10,77 @@ import pickle
 import random
 import csv
 import codecs
+import nltk
+import torch
 
 random.seed(0)
+MAX_LEN = 25
 
-config_path = os.environ.get('VISCONF')
-if not config_path:
-    # try default location, if not in environment
-    default_path_to_config = '../../../SwP/clp-vision/Config/gpu_potsdam.cfg'
-    if os.path.isfile(default_path_to_config):
-        config_path = default_path_to_config
-
-assert config_path is not None, 'You need to specify the path to the config file via environment variable VISCONF.'        
-
-config = configparser.ConfigParser()
-with open(config_path, 'r', encoding='utf-8') as f:
-    config.read_file(f)
-
-corpora_base = config.get('DEFAULT', 'corpora_base')
-preproc_path = config.get('DSGV-PATHS', 'preproc_path')
-dsgv_home = config.get('DSGV-PATHS', 'dsgv_home')
-
-sys.path.append(dsgv_home + '/Utils')
-from utils import icorpus_code, plot_labelled_bb, get_image_filename, query_by_id
-from utils import plot_img_cropped, plot_img_ax, invert_dict, get_a_by_b
-sys.path.append(dsgv_home + '/WACs/WAC_Utils')
-from wac_utils import create_word2den, is_relational
-sys.path.append(dsgv_home + '/Preproc')
-from sim_preproc import load_imsim, n_most_sim
-
-sys.path.append('../../../SwP/sempix/Common')
-from data_utils import load_dfs, plot_rel_by_relid, get_obj_bb, compute_distance_objs
-from data_utils import get_obj_key, compute_relpos_relargs_row, get_all_predicate
-from data_utils import compute_distance_relargs_row, get_rel_type, get_rel_instances
-from data_utils import compute_obj_sizes_row
-
-df_names = ['mscoco_bbdf', 'refcoco_refdf', 'refcocoplus_refdf', 'grex_refdf',
-            'vgregdf', 'vgimgdf', 'vgobjdf', 'vgreldf',
-            'vgpardf', 'cococapdf']
-
-df = load_dfs(preproc_path, df_names)
-
-df['vgpregdf'] = df['vgregdf'][df['vgregdf']['pphrase'].notnull() & 
-                               (df['vgregdf']['pphrase'] != '')]
-coco_sem_sim, coco_sem_map = load_imsim(os.path.join(preproc_path, 'mscoco_sim.npz'))
-visg_sem_sim, visg_sem_map = load_imsim(os.path.join(preproc_path, 'visgen_sim.npz'))
-coco_id2semsim = invert_dict(coco_sem_map)
-visg_id2semsim = invert_dict(visg_sem_map)
-
-coco_vis_sim, coco_vis_map = load_imsim(os.path.join(preproc_path, 'mscoco_vis_sim.npz'))
-visg_vis_sim, visg_vis_map = load_imsim(os.path.join(preproc_path, 'visgen_vis_sim.npz'))
-coco_id2vissim = invert_dict(coco_vis_map)
-visg_id2vissim = invert_dict(visg_vis_map)
-
-# intersecting visual genome and coco captions. Slow-ish.
-caption_coco_iids = list(set(df['cococapdf']['image_id'].tolist()))
-# regions for only those image for which we also have coco captions
-visgencocap_regdf = df['vgregdf'].merge(pd.DataFrame(caption_coco_iids, columns=['coco_id']))
-# coco_image_ids for images with both caption and region
-vgcap_coco_iids = list(set(visgencocap_regdf['coco_id'].tolist()))
-# visgen_image_ids for images with both caption and region
-vgcap_vg_iids = list(set(visgencocap_regdf['image_id'].tolist()))
-
-# map coco_ids to visgen_ids, and back
-coco2vg = dict(visgencocap_regdf[['coco_id', 'image_id']].values)
-vg2coco = dict([(v,k) for k,v in coco2vg.items()])
-
-df['vgpardf']['coco_image_id'] = df['vgpardf']['image_id'].apply(lambda x: vg2coco.get(x, None))
-df['cocoparcapdf'] = df['cococapdf'].merge(df['vgpardf'],
-                                           left_on='image_id', right_on='coco_image_id')
+#config_path = os.environ.get('VISCONF')
+#if not config_path:
+#    # try default location, if not in environment
+#    default_path_to_config = '../../../SwP/clp-vision/Config/gpu_potsdam.cfg'
+#    if os.path.isfile(default_path_to_config):
+#        config_path = default_path_to_config
+#
+#assert config_path is not None, 'You need to specify the path to the config file via environment variable VISCONF.'        
+#
+#config = configparser.ConfigParser()
+#with open(config_path, 'r', encoding='utf-8') as f:
+#    config.read_file(f)
+#
+#corpora_base = config.get('DEFAULT', 'corpora_base')
+#preproc_path = config.get('DSGV-PATHS', 'preproc_path')
+#dsgv_home = config.get('DSGV-PATHS', 'dsgv_home')
+#
+#sys.path.append(dsgv_home + '/Utils')
+#from utils import icorpus_code, plot_labelled_bb, get_image_filename, query_by_id
+#from utils import plot_img_cropped, plot_img_ax, invert_dict, get_a_by_b
+#sys.path.append(dsgv_home + '/WACs/WAC_Utils')
+#from wac_utils import create_word2den, is_relational
+#sys.path.append(dsgv_home + '/Preproc')
+#from sim_preproc import load_imsim, n_most_sim
+#
+#sys.path.append('../../../SwP/sempix/Common')
+#from data_utils import load_dfs, plot_rel_by_relid, get_obj_bb, compute_distance_objs
+#from data_utils import get_obj_key, compute_relpos_relargs_row, get_all_predicate
+#from data_utils import compute_distance_relargs_row, get_rel_type, get_rel_instances
+#from data_utils import compute_obj_sizes_row
+#
+#df_names = ['mscoco_bbdf', 'refcoco_refdf', 'refcocoplus_refdf', 'grex_refdf',
+#            'vgregdf', 'vgimgdf', 'vgobjdf', 'vgreldf',
+#            'vgpardf', 'cococapdf']
+#
+#df = load_dfs(preproc_path, df_names)
+#
+#df['vgpregdf'] = df['vgregdf'][df['vgregdf']['pphrase'].notnull() & 
+#                               (df['vgregdf']['pphrase'] != '')]
+#coco_sem_sim, coco_sem_map = load_imsim(os.path.join(preproc_path, 'mscoco_sim.npz'))
+#visg_sem_sim, visg_sem_map = load_imsim(os.path.join(preproc_path, 'visgen_sim.npz'))
+#coco_id2semsim = invert_dict(coco_sem_map)
+#visg_id2semsim = invert_dict(visg_sem_map)
+#
+#coco_vis_sim, coco_vis_map = load_imsim(os.path.join(preproc_path, 'mscoco_vis_sim.npz'))
+#visg_vis_sim, visg_vis_map = load_imsim(os.path.join(preproc_path, 'visgen_vis_sim.npz'))
+#coco_id2vissim = invert_dict(coco_vis_map)
+#visg_id2vissim = invert_dict(visg_vis_map)
+#
+## intersecting visual genome and coco captions. Slow-ish.
+#caption_coco_iids = list(set(df['cococapdf']['image_id'].tolist()))
+## regions for only those image for which we also have coco captions
+#visgencocap_regdf = df['vgregdf'].merge(pd.DataFrame(caption_coco_iids, columns=['coco_id']))
+## coco_image_ids for images with both caption and region
+#vgcap_coco_iids = list(set(visgencocap_regdf['coco_id'].tolist()))
+## visgen_image_ids for images with both caption and region
+#vgcap_vg_iids = list(set(visgencocap_regdf['image_id'].tolist()))
+#
+## map coco_ids to visgen_ids, and back
+#coco2vg = dict(visgencocap_regdf[['coco_id', 'image_id']].values)
+#vg2coco = dict([(v,k) for k,v in coco2vg.items()])
+#
+#df['vgpardf']['coco_image_id'] = df['vgpardf']['image_id'].apply(lambda x: vg2coco.get(x, None))
+#df['cocoparcapdf'] = df['cococapdf'].merge(df['vgpardf'],
+#                                           left_on='image_id', right_on='coco_image_id')
 
 def create_binary_dataset(data_filename, sim_rank=0, train_split=[0.8,0.1,0.1]):
     """
@@ -345,7 +348,101 @@ def create_word_ind_dict(data_path):
 
     ind_path = os.path.join(data_path, "word_inds.pkl")
     with open(ind_path, "wb") as ind_file:
-        pickle.dump(ind_file, (word2ind, ind2word))
+        #pickle.dump(ind_file, (word2ind, ind2word))
+        pickle.dump((word2ind, ind2word), ind_file)
 
-#create_word_ind_dict("../../data/bert_classify_thereis_5caps")
-preproc_bert_baseline("../../data/binary_class.pkl", "../../data/bert_classify_thereis_5caps", num_captions=5)
+
+def load_data(train_filename, word_ind_filename, batch_size=64):
+    """
+    Load training data and translate the words to indices.
+
+    Parameters
+    ----------
+    train_filename : str
+        Filename of a csv file containg the training data.
+    word_ind_filename : str
+        Filename of a file containing dicts that translate
+        from words to indices and from indices to words, respectively.
+    batch_size : int
+        batch size
+    """
+
+    inputs = []
+    caps = []
+    objs = []
+    labels = []
+
+    with open(word_ind_filename, "rb") as word_ind_file:
+        word2ind, ind2word = pickle.load(word_ind_file)
+
+    with open(train_filename) as train_file:
+        #train_reader = csv.reader(train_file, delimiter='\t', quotechar=None, escapechar="\\")
+        train_reader = csv.reader(train_file, delimiter='\t', escapechar="\\")
+        for i, line in enumerate(train_reader):
+            if i == 122467:
+                print(line)
+            if i == 0:
+                continue
+            caption = line[1].lower()
+            obj = line[2].lower()
+            label = line[3]
+            
+            cap_words = nltk.word_tokenize(caption)
+            cap_words = cap_words[:MAX_LEN]
+            cap_inds = torch.tensor([float(word2ind[word]) for word in cap_words])
+            caps.append(cap_inds)
+
+            obj_words = nltk.word_tokenize(obj)
+            obj_words = obj_words[:MAX_LEN] # unlikely
+            obj_inds = torch.tensor([float(word2ind[word]) for word in obj_words])
+            objs.append(obj_inds)
+
+            if label == "True":
+                labels.append(torch.tensor([0.0,1.0]))
+            elif label == "False":
+                labels.append(torch.tensor([1.0,0.0]))
+            else:
+                print("###" + label + "###")
+                print(line)
+                print(i)
+                raise Exception("label neither true nor false")
+
+            if i % 50000 == 0:
+                print("read", i, "training examples") 
+
+    caps_batched = []
+    while caps != []:
+        caps_batched.append(caps[:batch_size])
+        caps = caps[batch_size:]
+
+    objs_batched = []
+    while objs != []:
+        objs_batched.append(objs[:batch_size])
+        objs = objs[batch_size:]
+
+    labels_batched = []
+    while labels != []:
+        labels_batched.append(labels[:batch_size])
+        labels = labels[batch_size:]
+
+    return caps_batched, objs_batched, labels_batched
+
+word_ind_filename = "/home/users/srauniyar/data/entailment_data_analysis/obj_in_caption/cap_not_seen/word_inds.pkl"
+caps, objs, labels = load_data("/home/users/srauniyar/data/entailment_data_analysis/obj_in_caption/cap_not_seen/train.tsv", 
+                               word_ind_filename, 
+                               batch_size=64)
+
+with open("/home/users/srauniyar/data/entailment_data_analysis/obj_in_caption/cap_not_seen/lstm_preprocessed_train.pkl", "wb") as processed_file:
+    pickle.dump((caps,objs,labels), processed_file)
+
+
+caps, objs, labels = load_data("/home/users/srauniyar/data/entailment_data_analysis/obj_in_caption/cap_not_seen/dev.tsv", 
+                               word_ind_filename, 
+                               batch_size=64)
+
+with open("/home/users/srauniyar/data/entailment_data_analysis/obj_in_caption/cap_not_seen/lstm_preprocessed_dev.pkl", "wb") as processed_file:
+    pickle.dump((caps,objs,labels), processed_file)
+
+
+#create_word_ind_dict("../../../data/entailment_data_analysis/obj_in_caption/cap_not_seen/")
+#preproc_bert_baseline("../../data/binary_class.pkl", "../../data/bert_classify_thereis_5caps", num_captions=5)

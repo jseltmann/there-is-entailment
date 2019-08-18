@@ -4,18 +4,20 @@ import nltk
 import csv
 import pickle
 
-from basic_model import BaseLSTM
+from model import InnerAttLSTM
 
 MAX_LEN = 25
 BATCH_SIZE = 64
-NUM_EPOCHS = 1#3
+NUM_EPOCHS = 3
 LEARNING_RATE = 1e-4
 
 INPUT_SIZE = 1
-HIDDEN_SIZE = 300#25#100
+HIDDEN_SIZE = 25#100
 with open("../../../data/bert_classify_thereis_5caps_seed0/word_inds.pkl", "rb") as word_ind_file:
     word2num, _ = pickle.load(word_ind_file)
     PAD_INDEX = word2num["<PAD>"]
+NUM_WORDS = len(word2num)
+EMB_SIZE=300
 
 def load_data(train_filename, word_ind_filename, batch_size=64):
     """
@@ -102,7 +104,7 @@ num_batches = len(caps)
 
 print("loaded data")
 
-model = BaseLSTM(INPUT_SIZE, HIDDEN_SIZE, BATCH_SIZE)
+model = InnerAttLSTM(NUM_WORDS, EMB_SIZE, HIDDEN_SIZE, BATCH_SIZE, MAX_LEN)
 
 loss_fn = torch.nn.MSELoss(size_average=False)
 optimizer = torch.optim.Adam(model.parameters(), lr=LEARNING_RATE)
@@ -113,7 +115,7 @@ for epoch in range(NUM_EPOCHS):
     for (cap_batch, obj_batch), label_batch in list(zip(zip(caps, objs),labels)):
         cap_batch.sort(key=len, reverse=True)
         cap_batch = rnn.pack_sequence(cap_batch)#, padding_value=PAD_INDEX)
-        cap_batch, _ = rnn.pad_packed_sequence(cap_batch, padding_value=PAD_INDEX)
+        cap_batch, _ = rnn.pad_packed_sequence(cap_batch, padding_value=PAD_INDEX, total_length=MAX_LEN)
         cap_batch = cap_batch.unsqueeze(2)
 
         obj_batch.sort(key=len, reverse=True)
@@ -136,4 +138,4 @@ for epoch in range(NUM_EPOCHS):
             print("epoch:", epoch, "batch:", i, "out of", num_batches)
         i += 1
 
-torch.save(model.state_dict(), "../../../logs/base_lstm_classification/models/base_2019-08-08_activations.pt")
+torch.save(model.state_dict(), "../../../logs/base_lstm_classification/models/inner_att_2019-08-15.pt")

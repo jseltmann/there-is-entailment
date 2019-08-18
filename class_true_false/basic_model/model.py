@@ -9,7 +9,7 @@ class BaseLSTM(nn.Module):
         super(BaseLSTM, self).__init__()
         self.hidden_size = hidden_size
         self.batch_size = batch_size
-        
+
         self.caption_lstm = nn.LSTM(input_size,
                                     self.hidden_size,
                                     bidirectional=True)
@@ -32,6 +32,8 @@ class BaseLSTM(nn.Module):
 
         h_combined = torch.cat([h_cap, h_obj], 1)
 
+        #l1 = F.relu(self.linear1(h_combined))
+        #out = F.relu(self.linear2(l1))
         l1 = self.linear1(h_combined)
         out = self.linear2(l1)
 

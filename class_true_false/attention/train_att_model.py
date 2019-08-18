@@ -4,15 +4,15 @@ import nltk
 import csv
 import pickle
 
-from basic_model import BaseLSTM
+from LSTMAttention import AttLSTM
 
 MAX_LEN = 25
 BATCH_SIZE = 64
-NUM_EPOCHS = 1#3
+NUM_EPOCHS = 3
 LEARNING_RATE = 1e-4
 
 INPUT_SIZE = 1
-HIDDEN_SIZE = 300#25#100
+HIDDEN_SIZE = 25#100
 with open("../../../data/bert_classify_thereis_5caps_seed0/word_inds.pkl", "rb") as word_ind_file:
     word2num, _ = pickle.load(word_ind_file)
     PAD_INDEX = word2num["<PAD>"]
@@ -102,7 +102,7 @@ num_batches = len(caps)
 
 print("loaded data")
 
-model = BaseLSTM(INPUT_SIZE, HIDDEN_SIZE, BATCH_SIZE)
+model = AttLSTM(INPUT_SIZE, HIDDEN_SIZE, BATCH_SIZE, MAX_LEN)
 
 loss_fn = torch.nn.MSELoss(size_average=False)
 optimizer = torch.optim.Adam(model.parameters(), lr=LEARNING_RATE)
@@ -136,4 +136,4 @@ for epoch in range(NUM_EPOCHS):
             print("epoch:", epoch, "batch:", i, "out of", num_batches)
         i += 1
 
-torch.save(model.state_dict(), "../../../logs/base_lstm_classification/models/base_2019-08-08_activations.pt")
+torch.save(model.state_dict(), "../../../logs/base_lstm_classification/models/att_mean_2019-08-07.pt")
