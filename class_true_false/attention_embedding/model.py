@@ -24,6 +24,7 @@ class EmbAttLSTM(nn.Module):
 
         self.linear1 = nn.Linear(2 * self.hidden_size, 2 * self.hidden_size)
         self.linear2 = nn.Linear(2 * self.hidden_size, 2)
+        self.softmax = nn.Softmax(dim=1)
 
     def forward(self, caption, obj):
         caption = caption.long()
@@ -54,8 +55,8 @@ class EmbAttLSTM(nn.Module):
 
         h_sum = torch.sum(att_applied, 0)
 
-        l1 = self.linear1(h_sum)
-        out = self.linear2(l1)
+        l1 = F.tanh(self.linear1(h_sum))
+        out = self.softmax(self.linear2(l1))
 
         return out
 

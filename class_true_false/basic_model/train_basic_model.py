@@ -4,15 +4,15 @@ import nltk
 import csv
 import pickle
 
-from basic_model import BaseLSTM
+from model import BaseLSTM
 
 MAX_LEN = 25
 BATCH_SIZE = 64
-NUM_EPOCHS = 1#3
+NUM_EPOCHS = 3
 LEARNING_RATE = 1e-4
 
 INPUT_SIZE = 1
-HIDDEN_SIZE = 300#25#100
+HIDDEN_SIZE = 25#100
 with open("../../../data/bert_classify_thereis_5caps_seed0/word_inds.pkl", "rb") as word_ind_file:
     word2num, _ = pickle.load(word_ind_file)
     PAD_INDEX = word2num["<PAD>"]
@@ -90,50 +90,59 @@ def load_data(train_filename, word_ind_filename, batch_size=64):
     return caps_batched, objs_batched, labels_batched
 
 
-#caps, objs, labels = load_data("../../data/bert_classify_thereis_5caps_seed0/dev.tsv",
-#                           "../../data/bert_classify_thereis_5caps_seed0/word_inds.pkl",
-#                           batch_size=BATCH_SIZE)
-#with open("../../data/bert_classify_thereis_5caps_seed0/lstm_preprocessed_dev.pkl", "wb") as processed_file:
-#    pickle.dump((caps, objs, labels), processed_file)
-with open("../../../data/bert_classify_thereis_5caps_seed0/lstm_preprocessed_train.pkl", "rb") as processed_file:
-    caps, objs, labels = pickle.load(processed_file)
-
-num_batches = len(caps)
-
-print("loaded data")
-
-model = BaseLSTM(INPUT_SIZE, HIDDEN_SIZE, BATCH_SIZE)
-
-loss_fn = torch.nn.MSELoss(size_average=False)
-optimizer = torch.optim.Adam(model.parameters(), lr=LEARNING_RATE)
-
-for epoch in range(NUM_EPOCHS):
-
-    i = 0
-    for (cap_batch, obj_batch), label_batch in list(zip(zip(caps, objs),labels)):
-        cap_batch.sort(key=len, reverse=True)
-        cap_batch = rnn.pack_sequence(cap_batch)#, padding_value=PAD_INDEX)
-        cap_batch, _ = rnn.pad_packed_sequence(cap_batch, padding_value=PAD_INDEX)
-        cap_batch = cap_batch.unsqueeze(2)
-
-        obj_batch.sort(key=len, reverse=True)
-        obj_batch = rnn.pack_sequence(obj_batch)
-        obj_batch, _ = rnn.pad_packed_sequence(obj_batch, padding_value=PAD_INDEX)
-        obj_batch = obj_batch.unsqueeze(2)
-
-        label_batch = torch.stack(label_batch)
-
-        model.zero_grad()
-        model.reset_state()
-
-        preds = model(cap_batch, obj_batch)
-        loss = loss_fn(preds, label_batch)
-
-        optimizer.zero_grad()
-        loss.backward()
-        optimizer.step()
-        if i % 5000 == 0:
-            print("epoch:", epoch, "batch:", i, "out of", num_batches)
-        i += 1
-
-torch.save(model.state_dict(), "../../../logs/base_lstm_classification/models/base_2019-08-08_activations.pt")
+caps, objs, labels = load_data("/home/users/jseltmann/data/entailment_data_analysis/obj_in_caption/lemma_cap_not_seen/dev.tsv",
+                           "../../../data/bert_classify_thereis_5caps_seed0/word_inds.pkl",
+                           batch_size=BATCH_SIZE)
+with open("/home/users/jseltmann/data/entailment_data_analysis/obj_in_caption/lemma_cap_not_seen/lstm_preprocessed_dev.pkl", "wb") as processed_file:
+    pickle.dump((caps, objs, labels), processed_file)
+#with open("../../../data/bert_classify_thereis_5caps_seed0/lstm_preprocessed_train.pkl", "rb") as processed_file:
+#    caps, objs, labels = pickle.load(processed_file)
+#
+##cross_ent_labels = []
+##for batch in labels:
+##    new_batch = [torch.argmax(l) for l in batch]
+##    cross_ent_labels.append(new_batch)
+##
+##labels = cross_ent_labels
+#
+#num_batches = len(caps)
+#
+#print("loaded data")
+#
+#model = BaseLSTM(INPUT_SIZE, HIDDEN_SIZE, BATCH_SIZE)
+#
+#loss_fn = torch.nn.MSELoss(size_average=False)
+##loss_fn = torch.nn.CrossEntropyLoss()
+#optimizer = torch.optim.Adam(model.parameters(), lr=LEARNING_RATE)
+#
+#for epoch in range(NUM_EPOCHS):
+#
+#    i = 0
+#    for (cap_batch, obj_batch), label_batch in list(zip(zip(caps, objs),labels)):
+#        cap_batch.sort(key=len, reverse=True)
+#        cap_batch = rnn.pack_sequence(cap_batch)#, padding_value=PAD_INDEX)
+#        cap_batch, _ = rnn.pad_packed_sequence(cap_batch, padding_value=PAD_INDEX)
+#        cap_batch = cap_batch.unsqueeze(2)
+#
+#        obj_batch.sort(key=len, reverse=True)
+#        obj_batch = rnn.pack_sequence(obj_batch)
+#        obj_batch, _ = rnn.pad_packed_sequence(obj_batch, padding_value=PAD_INDEX)
+#        obj_batch = obj_batch.unsqueeze(2)
+#
+#        label_batch = torch.stack(label_batch)
+#
+#        model.zero_grad()
+#        model.reset_state()
+#
+#        preds = model(cap_batch, obj_batch)
+#        loss = loss_fn(preds, label_batch)
+#
+#        optimizer.zero_grad()
+#        loss.backward()
+#        optimizer.step()
+#        if i % 5000 == 0:
+#            print("epoch:", epoch, "batch:", i, "out of", num_batches)
+#        i += 1
+#
+#torch.save(model.state_dict(), "../../../logs/base_lstm_classification/models/activations/base_25hidden.pt")
+##torch.save(model.state_dict(), "../../../logs/base_lstm_classification/models/activations/base_cross_ent_25hidden.pt")

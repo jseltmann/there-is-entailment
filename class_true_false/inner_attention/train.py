@@ -138,4 +138,4 @@ for epoch in range(NUM_EPOCHS):
             print("epoch:", epoch, "batch:", i, "out of", num_batches)
         i += 1
 
-torch.save(model.state_dict(), "../../../logs/base_lstm_classification/models/inner_att_2019-08-15.pt")
+torch.save(model.state_dict(), "../../../logs/base_lstm_classification/models/activations/inner_att.pt")

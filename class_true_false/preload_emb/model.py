@@ -3,15 +3,22 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 
-class EmbLSTM(nn.Module):
 
-    def __init__(self, num_words=10000, emb_size=100, hidden_size=100, batch_size=64):
-        super(EmbLSTM, self).__init__()
+class PreloadEmbLSTM(nn.Module):
+
+    def __init__(self, num_words=10000, emb_size=100, 
+                 hidden_size=100, batch_size=64, 
+                 emb_file=None, word2num=None):
+        super(PreloadEmbLSTM, self).__init__()
         self.hidden_size = hidden_size
         self.emb_size = emb_size
         self.batch_size = batch_size
         
-        self.embedding = nn.Embedding(num_words, self.emb_size)
+        if not emb_file is None and not word2num is None:
+            vectors = load_vectors(emb_file, word2num)
+            self.embedding = nn.Embedding.from_pretrained(vectors)
+        else:
+            self.embedding = nn.Embedding(num_words, self.emb_size)
         self.caption_lstm = nn.LSTM(self.emb_size,
                                     self.hidden_size,
                                     bidirectional=True)
@@ -60,3 +67,40 @@ class EmbLSTM(nn.Module):
         
 
 
+def load_vectors(vector_filename, word2num):
+    """
+    Load glove vectors.
+
+    Parameters
+    ----------
+    vector_filename : str
+        File to read the vectors from.
+    word2num : dict[str]
+        Mapping from words to indices.
+
+    Return
+    ------
+    vectors : dict[str]
+        Dict containing the vector for each word.
+    """
+
+    with open(vector_filename) as vf:
+        for line in vf:
+            entries = line.split()
+            emb_dim = len(entries) - 1
+            break
+
+    vectors = torch.zeros(len(word2num), emb_dim)
+
+    with open(vector_filename) as vector_file:
+        for i, line in enumerate(vector_file):
+            entries = line.split()
+            word = entries[0].lower()
+            if word in word2num:
+                nums = entries[1:]
+                nums = [float(num) for num in nums]
+                vector = torch.Tensor(nums)
+                position = word2num[word]
+                vectors[position] = vector
+
+    return vectors

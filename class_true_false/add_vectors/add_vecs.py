@@ -40,7 +40,7 @@ def load_vectors(vector_filename, num_vecs=10000):
 
 
 
-def evaluate_vector_addition(vectors, dev_path, log_path, cutoff=40, vector_path=None):
+def evaluate_vector_addition(vectors, dev_path, log_path, cutoff=40, vector_path=None, stopwords=[]):
     """
     Evaluate LSTM model by calculating the accuracy over a test set.
 
@@ -54,6 +54,8 @@ def evaluate_vector_addition(vectors, dev_path, log_path, cutoff=40, vector_path
         Path to write the results to.
     vector_path : str
         Path to file containing vectors.
+    stopwords : [str]
+        List of words to ignore in the addition.
     """
 
     vector_shape = list(vectors.values())[0].shape
@@ -63,6 +65,7 @@ def evaluate_vector_addition(vectors, dev_path, log_path, cutoff=40, vector_path
     true_pos = 0
     false_pos = 0
     true_neg = 0
+    false_neg = 0
 
     with open(dev_path) as dev_file:
         dev_reader = csv.reader(dev_file, delimiter="\t", quotechar=None, escapechar="\\")
@@ -87,7 +90,7 @@ def evaluate_vector_addition(vectors, dev_path, log_path, cutoff=40, vector_path
             obj_sum = np.zeros(vector_shape)
             for word in obj:
                 word = word.lower()
-                if word in vectors:
+                if word in vectors and not word in stopwords:
                     obj_sum += vectors[word]
     
             obj_dist = cosine(cap_sum, obj_sum)
@@ -104,7 +107,7 @@ def evaluate_vector_addition(vectors, dev_path, log_path, cutoff=40, vector_path
                 #if j % 50000 == 0 or j == 1 or j == 100:
                 #    print(j)
             #closer = [dist for dist in word_dists if dist < obj_dist]
-    
+
             #if len(closer) > cutoff:
             if closer_count > cutoff:
                 pred = False
@@ -123,15 +126,22 @@ def evaluate_vector_addition(vectors, dev_path, log_path, cutoff=40, vector_path
                 false_pos += 1
             if label == False and pred == False:
                 true_neg += 1
-    
+            if label == True and pred == False:
+                false_neg += 1
+
+            if i % 20000 == 0:
+                break
+
+
     acc = corr / total
-    prec = true_pos / (true_pos + true_neg)
-    rec = true_pos / (true_pos + false_pos)
+    prec = true_pos / (true_pos + false_pos)
+    rec = true_pos / (true_pos + false_neg)
 
     with open(log_path, "w") as log_file:
         log_file.write("Vector sums:\n")
         #log_file.write(str(hyp_params) + "\n")
         #log_file.write("parameter file: " + model_path + "\n")
+        log_file.write("stopwords: " + str(stopwords != []) + "\n")
         log_file.write("vector_file: " + vector_path + "\n")
         log_file.write("vocabulary size: " + str(len(vectors)) + "\n")
         log_file.write("cutoff: " + str(cutoff) + "\n")
@@ -143,12 +153,20 @@ def evaluate_vector_addition(vectors, dev_path, log_path, cutoff=40, vector_path
         
 
         
+stopwords = ["", "(", ")", "a", "about", "an", "and", "are", "around", "as", "at",
+    "away", "be", "become", "became", "been", "being", "by", "did", "do",
+    "does", "during", "each", "for", "from", "get", "have", "has", "had", "he",
+    "her", "his", "how", "i", "if", "in", "is", "it", "its", "made", "make",
+    "many", "most", "not", "of", "on", "or", "s", "she", "some", "that", "the",
+    "their", "there", "this", "these", "those", "to", "under", "was", "were",
+    "what", "when", "where", "which", "who", "will", "with", "you", "your"]
 
-#vectors = load_vectors("../../../data/glove.6B.300d.txt")
-#print("read vectors")
-#
-#evaluate_vector_addition(vectors, 
-#                         "../../../data/bert_classify_thereis_5caps_seed0/dev.tsv",
-#                         "../../../logs/vector_sum/vector_sum_300d.log",
-#                         cutoff=40,
-#                         vector_path="../../../data/glove.6B.300d.txt")
+vectors = load_vectors("../../../data/glove.6B.300d.txt")
+print("read vectors")
+
+evaluate_vector_addition(vectors, 
+                         "../../../data/bert_classify_thereis_5caps_seed0/dev.tsv",
+                         "../../../logs/vector_sum/vector_sum_300d_stopwords_cut100.log",
+                         cutoff=100,
+                         vector_path="../../../data/glove.6B.300d.txt",
+                         stopwords=stopwords)

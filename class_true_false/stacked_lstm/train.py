@@ -4,7 +4,7 @@ import nltk
 import csv
 import pickle
 
-from model import EmbAttLSTM
+from model import StackedLSTM
 
 MAX_LEN = 25
 BATCH_SIZE = 64
@@ -104,7 +104,7 @@ num_batches = len(caps)
 
 print("loaded data")
 
-model = EmbAttLSTM(NUM_WORDS, EMB_SIZE, HIDDEN_SIZE, BATCH_SIZE, MAX_LEN)
+model = StackedLSTM(NUM_WORDS, EMB_SIZE, HIDDEN_SIZE, BATCH_SIZE, MAX_LEN)
 
 loss_fn = torch.nn.MSELoss(size_average=False)
 optimizer = torch.optim.Adam(model.parameters(), lr=LEARNING_RATE)
@@ -138,4 +138,4 @@ for epoch in range(NUM_EPOCHS):
             print("epoch:", epoch, "batch:", i, "out of", num_batches)
         i += 1
 
-torch.save(model.state_dict(), "../../../logs/base_lstm_classification/models/activations/emb_att.pt")
+torch.save(model.state_dict(), "../../../logs/base_lstm_classification/models/activations/stacked_lstm.pt")

@@ -4,11 +4,11 @@ import nltk
 import csv
 import pickle
 
-from model import EmbAttLSTM
+from model import ActLSTM
 
 MAX_LEN = 25
 BATCH_SIZE = 64
-NUM_EPOCHS = 3
+NUM_EPOCHS = 1#3
 LEARNING_RATE = 1e-4
 
 INPUT_SIZE = 1
@@ -16,8 +16,6 @@ HIDDEN_SIZE = 25#100
 with open("../../../data/bert_classify_thereis_5caps_seed0/word_inds.pkl", "rb") as word_ind_file:
     word2num, _ = pickle.load(word_ind_file)
     PAD_INDEX = word2num["<PAD>"]
-NUM_WORDS = len(word2num)
-EMB_SIZE=300
 
 def load_data(train_filename, word_ind_filename, batch_size=64):
     """
@@ -104,7 +102,7 @@ num_batches = len(caps)
 
 print("loaded data")
 
-model = EmbAttLSTM(NUM_WORDS, EMB_SIZE, HIDDEN_SIZE, BATCH_SIZE, MAX_LEN)
+model = ActLSTM(INPUT_SIZE, HIDDEN_SIZE, BATCH_SIZE)
 
 loss_fn = torch.nn.MSELoss(size_average=False)
 optimizer = torch.optim.Adam(model.parameters(), lr=LEARNING_RATE)
@@ -138,4 +136,4 @@ for epoch in range(NUM_EPOCHS):
             print("epoch:", epoch, "batch:", i, "out of", num_batches)
         i += 1
 
-torch.save(model.state_dict(), "../../../logs/base_lstm_classification/models/activations/emb_att.pt")
+torch.save(model.state_dict(), "../../../logs/base_lstm_classification/models/base_2019-08-19_activations_25hidden.pt")

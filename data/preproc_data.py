@@ -217,6 +217,8 @@ def preproc_bert_baseline(data_filename, bert_data_path, num_captions=5):
                 #extract caption
                 if len(obj.split('\x00')) > 1:
                     obj = "".join(obj.split('\x00'))
+                if obj[0] == "\"":
+                    obj = obj[1:]
                 visgen_rows = visgencocap_regdf[visgencocap_regdf['image_id'] == image_id]
                 coco_id = int(visgen_rows.sample()["coco_id"].values[0])
                 this_df = df["cococapdf"]
@@ -383,6 +385,9 @@ def load_data(train_filename, word_ind_filename, batch_size=64):
                 print(line)
             if i == 0:
                 continue
+            if len(line) < 4:
+                print(i)
+                print(line)
             caption = line[1].lower()
             obj = line[2].lower()
             label = line[3]
@@ -427,22 +432,136 @@ def load_data(train_filename, word_ind_filename, batch_size=64):
 
     return caps_batched, objs_batched, labels_batched
 
+
+def smaller_set_objects(orig_filename, new_filename, size, train_objs, frac=0.5):
+    """
+    Create a (smaller) set from the original set,
+    controlling the fraction of objects which were seen during training.
+    Note that the distribution in the resulting set might not follow the fraction,
+    if the original dataset doesn't contain enough examples of one type or another.
+
+    Parameters
+    ----------
+    orig_filename : str
+        Original tsv file from which to create the new set.
+    new_filename : str
+        File to save the created set to.
+    size : int
+        Number of examples in the new set.
+    train_objs : [str]
+        List of objects seen in the train set.
+    frac : float
+        Fraction of examples whose object was seen in the training set.
+    """
+    num_seen = round(frac * size)
+    num_not_seen = size - num_seen
+    seen_true = []
+    not_seen_true = []
+    seen_false = []
+    not_seen_false = []
+    count_seen_true = 0
+    count_not_seen_true = 0
+    count_seen_false = 0
+    count_not_seen_false = 0
+
+    with open(orig_filename) as orig_file:
+        reader = csv.reader(orig_file, delimiter="\t", escapechar="\\")
+        for line in reader:
+            obj = line[2]
+            label = line[3]
+            if obj in train_objs and label == "True":
+                if count_seen_true < num_seen / 2:
+                    seen_true.append(line)
+                    count_seen_true += 1
+            elif obj in train_objs and label == "False":
+                if count_seen_false < num_seen / 2:
+                    seen_false.append(line)
+                    count_seen_false += 1
+            elif obj not in train_objs and label == "True":
+                if count_not_seen_true < num_seen / 2:
+                    not_seen_true.append(line)
+                    count_not_seen_true += 1
+            else:
+                if count_not_seen_false < num_seen / 2:
+                    not_seen_false.append(line)
+                    count_not_seen_false += 1
+
+    print(len(seen_true))
+    print(len(seen_false))
+    print(len(not_seen_true))
+    print(len(not_seen_false))
+    examples = seen_true + seen_false + not_seen_true + not_seen_false
+    np.random.shuffle(examples)
+
+    with open(new_filename, "w") as new_file:
+        writer = csv.writer(new_file, delimiter="\t", escapechar="\\")
+        for line in examples:
+            writer.writerow(line)
+            
 word_ind_filename = "/home/users/srauniyar/data/entailment_data_analysis/obj_in_caption/cap_not_seen/word_inds.pkl"
-caps, objs, labels = load_data("/home/users/srauniyar/data/entailment_data_analysis/obj_in_caption/cap_not_seen/train.tsv", 
-                               word_ind_filename, 
-                               batch_size=64)
 
-with open("/home/users/srauniyar/data/entailment_data_analysis/obj_in_caption/cap_not_seen/lstm_preprocessed_train.pkl", "wb") as processed_file:
-    pickle.dump((caps,objs,labels), processed_file)
+def load_objects(train_filename):
+    """
+    Load all possible objects from the train corpus.
+ 
+    Parameters
+    ----------
+    train_filename : str
+        Path of tsv file containing the train set.
+    
+    Return
+    ------
+    objects : set(str)
+        Set of objects in the training set.
+    """
+    
+    with open(train_filename) as train_file:
+        train_reader = csv.reader(train_file, delimiter="\t", quotechar=None, escapechar="\\")
+        
+        objs = set()
+ 
+        for i, line in enumerate(train_reader):
+            if i == 0:
+                continue
+    
+            obj = line[2]
+            objs.add(obj)
+    return objs
 
+#word_ind_filename = "../../data/bert_classify_thereis_5caps_seed0/word_inds.pkl"
 
-caps, objs, labels = load_data("/home/users/srauniyar/data/entailment_data_analysis/obj_in_caption/cap_not_seen/dev.tsv", 
-                               word_ind_filename, 
-                               batch_size=64)
+#caps, objs, labels = load_data("/home/users/srauniyar/data/entailment_data_analysis/obj_in_caption/cap_not_seen/train.tsv", 
+#                               word_ind_filename, 
+#                               batch_size=64)
 
-with open("/home/users/srauniyar/data/entailment_data_analysis/obj_in_caption/cap_not_seen/lstm_preprocessed_dev.pkl", "wb") as processed_file:
-    pickle.dump((caps,objs,labels), processed_file)
+#with open("/home/users/srauniyar/data/entailment_data_analysis/obj_in_caption/cap_not_seen/lstm_preprocessed_train.pkl", "wb") as processed_file:
+#    pickle.dump((caps,objs,labels), processed_file)
+#
+#
+#caps, objs, labels = load_data("/home/users/srauniyar/data/entailment_data_analysis/obj_in_caption/score/dev.tsv", 
+#                               word_ind_filename, 
+#                               batch_size=64)
+
+#with open("../../../Misc/lstm_preprocessed_dev_harder.pkl", "wb") as processed_file:
+#with open("../../../data/entailment_data_analysis/obj_in_caption/score/lstm_preprocessed_dev_harder.pkl", "wb") as processed_file:
+#    pickle.dump((caps,objs,labels), processed_file)
 
 
 #create_word_ind_dict("../../../data/entailment_data_analysis/obj_in_caption/cap_not_seen/")
-#preproc_bert_baseline("../../data/binary_class.pkl", "../../data/bert_classify_thereis_5caps", num_captions=5)
+#preproc_bert_baseline("../../data/binary_class_seed0.pkl", "../../data/bert_classify_thereis_5caps_seed0", num_captions=5)
+
+train_objs = load_objects("../../data/bert_classify_thereis_5caps_seed0/train.tsv")
+smaller_set_objects("../../data/bert_classify_thereis_5caps_seed0/dev.tsv", 
+                    "../../data/bert_classify_thereis_5caps_seed0/dev_0.5seenObj.tsv", 
+                    20000, 
+                    train_objs, frac=0.5)
+#print("++++++++++++++++++")
+#smaller_set_objects("../../data/bert_classify_thereis_5caps_seed0/dev.tsv", 
+#                    "../../data/bert_classify_thereis_5caps_seed0/dev_1.0seenObj.tsv", 
+#                    20000, 
+#                    train_objs, frac=1)
+#print("++++++++++++++++++")
+#smaller_set_objects("../../data/bert_classify_thereis_5caps_seed0/dev.tsv", 
+#                    "../../data/bert_classify_thereis_5caps_seed0/dev_0.0seenObj.tsv", 
+#                    20000, 
+#                    train_objs, frac=0)

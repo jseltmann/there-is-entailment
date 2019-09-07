@@ -1,5 +1,5 @@
-export DATA_DIR=../../../data/bert_classify_thereis_5caps/
-export OUTPUT_DIR=../../../logs/bert_finetune/
+export DATA_DIR=../../../data/bert_classify_thereis_5caps_seed0/
+export OUTPUT_DIR=../../../logs/bert_without_pretraining/
 
 python3 ../../../bert_baseline/pytorch-pretrained-BERT/examples/run_classifier.py \
   --task_name thereis \

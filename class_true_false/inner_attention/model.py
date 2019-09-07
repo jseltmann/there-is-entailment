@@ -32,6 +32,8 @@ class InnerAttLSTM(nn.Module):
 
         self.linear1 = nn.Linear(2 * self.hidden_size, 2 * self.hidden_size)
         self.linear2 = nn.Linear(2 * self.hidden_size, 2)
+        self.softmax = nn.Softmax(dim=1)
+
 
     def forward(self, caption, obj):
         caption = caption.long()
@@ -85,8 +87,8 @@ class InnerAttLSTM(nn.Module):
         #h_sum = torch.sum(att_applied, 0)
 
         #l1 = self.linear1(h_sum)
-        l1 = self.linear1(h_obj)
-        out = self.linear2(l1)
+        l1 = torch.tanh(self.linear1(h_obj))
+        out = self.softmax(self.linear2(l1))
 
         return out
 

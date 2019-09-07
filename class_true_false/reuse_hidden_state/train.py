@@ -4,7 +4,7 @@ import nltk
 import csv
 import pickle
 
-from model import EmbLSTM
+from model import ReuseStateLSTM
 
 MAX_LEN = 25
 BATCH_SIZE = 64
@@ -104,7 +104,7 @@ num_batches = len(caps)
 
 print("loaded data")
 
-model = EmbLSTM(NUM_WORDS, EMB_DIM, HIDDEN_SIZE, BATCH_SIZE)
+model = ReuseStateLSTM(NUM_WORDS, EMB_DIM, HIDDEN_SIZE, BATCH_SIZE)
 
 loss_fn = torch.nn.MSELoss(size_average=False)
 optimizer = torch.optim.Adam(model.parameters(), lr=LEARNING_RATE)
@@ -141,4 +141,4 @@ for epoch in range(NUM_EPOCHS):
             print("epoch:", epoch, "batch:", i, "out of", num_batches)
         i += 1
 
-torch.save(model.state_dict(), "../../../logs/base_lstm_classification/trans_state_model_2019-08-08.pt")
+torch.save(model.state_dict(), "../../../logs/base_lstm_classification/models/activations/trans_state.pt")

@@ -3,6 +3,7 @@ import torch.nn.utils.rnn as rnn
 import nltk
 import csv
 import pickle
+from tensorboardX import SummaryWriter
 
 from model import EmbLSTM
 
@@ -50,7 +51,7 @@ def load_data(train_filename, word_ind_filename, batch_size=64):
             caption = line[1].lower()
             obj = line[2].lower()
             label = line[3]
-            
+
             cap_words = nltk.word_tokenize(caption)
             cap_words = cap_words[:MAX_LEN]
             cap_inds = torch.tensor([float(word2ind[word]) for word in cap_words])
@@ -109,6 +110,8 @@ model = EmbLSTM(NUM_WORDS, EMB_DIM, HIDDEN_SIZE, BATCH_SIZE)
 loss_fn = torch.nn.MSELoss(size_average=False)
 optimizer = torch.optim.Adam(model.parameters(), lr=LEARNING_RATE)
 
+writer = SummaryWriter("/home/users/jseltmann/Misc/debug/emb_tb/")
+
 for epoch in range(NUM_EPOCHS):
 
     i = 0
@@ -131,6 +134,8 @@ for epoch in range(NUM_EPOCHS):
         preds = model(cap_batch, obj_batch)
         loss = loss_fn(preds, label_batch)
 
+        writer.add_scalar('Train/Loss', loss, i + epoch*num_batches)
+
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
@@ -138,4 +143,6 @@ for epoch in range(NUM_EPOCHS):
             print("epoch:", epoch, "batch:", i, "out of", num_batches)
         i += 1
 
-torch.save(model.state_dict(), "../../../logs/base_lstm_classification/emb_model_2019-08-05.pt")
+writer.close()
+torch.save(model.state_dict(), "../../../logs/base_lstm_classification/models/activations/emb_model.pt")
+#torch.save(model.state_dict(), "../../../../Misc/debug/emb_model.pt")

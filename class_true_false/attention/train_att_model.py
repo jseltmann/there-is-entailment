@@ -4,7 +4,7 @@ import nltk
 import csv
 import pickle
 
-from LSTMAttention import AttLSTM
+from model import AttLSTM
 
 MAX_LEN = 25
 BATCH_SIZE = 64
@@ -136,4 +136,4 @@ for epoch in range(NUM_EPOCHS):
             print("epoch:", epoch, "batch:", i, "out of", num_batches)
         i += 1
 
-torch.save(model.state_dict(), "../../../logs/base_lstm_classification/models/att_mean_2019-08-07.pt")
+torch.save(model.state_dict(), "../../../logs/base_lstm_classification/models/activations/att.pt")

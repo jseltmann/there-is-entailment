@@ -21,6 +21,7 @@ class ReuseStateLSTM(nn.Module):
 
         self.linear1 = nn.Linear(2 * self.hidden_size, 2 * self.hidden_size)
         self.linear2 = nn.Linear(2 * self.hidden_size, 2)
+        self.softmax = nn.Softmax(dim=1)
 
     def forward(self, caption, obj):
         obj = obj.long()
@@ -41,8 +42,8 @@ class ReuseStateLSTM(nn.Module):
 
         #h_combined = torch.cat([h_cap, h_obj], 1)
 
-        l1 = self.linear1(h_cap)
-        out = self.linear2(l1)
+        l1 = torch.tanh(self.linear1(h_cap))
+        out = self.softmax(self.linear2(l1))
 
         return out
 

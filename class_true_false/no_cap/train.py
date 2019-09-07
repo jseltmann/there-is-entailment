@@ -4,12 +4,13 @@ import nltk
 import csv
 import pickle
 
-from model import EmbAttLSTM
+from model import NoCapLSTM
 
 MAX_LEN = 25
 BATCH_SIZE = 64
 NUM_EPOCHS = 3
 LEARNING_RATE = 1e-4
+EMB_DIM=300
 
 INPUT_SIZE = 1
 HIDDEN_SIZE = 25#100
@@ -17,7 +18,6 @@ with open("../../../data/bert_classify_thereis_5caps_seed0/word_inds.pkl", "rb")
     word2num, _ = pickle.load(word_ind_file)
     PAD_INDEX = word2num["<PAD>"]
 NUM_WORDS = len(word2num)
-EMB_SIZE=300
 
 def load_data(train_filename, word_ind_filename, batch_size=64):
     """
@@ -92,10 +92,10 @@ def load_data(train_filename, word_ind_filename, batch_size=64):
     return caps_batched, objs_batched, labels_batched
 
 
-#caps, objs, labels = load_data("../../data/bert_classify_thereis_5caps_seed0/dev.tsv",
-#                           "../../data/bert_classify_thereis_5caps_seed0/word_inds.pkl",
+#caps, objs, labels = load_data("../../../data/bert_classify_thereis_5caps_seed0/dev.tsv",
+#                           "../../../data/bert_classify_thereis_5caps_seed0/word_inds.pkl",
 #                           batch_size=BATCH_SIZE)
-#with open("../../data/bert_classify_thereis_5caps_seed0/lstm_preprocessed_dev.pkl", "wb") as processed_file:
+#with open("../../../data/bert_classify_thereis_5caps_seed0/lstm_preprocessed_dev.pkl", "wb") as processed_file:
 #    pickle.dump((caps, objs, labels), processed_file)
 with open("../../../data/bert_classify_thereis_5caps_seed0/lstm_preprocessed_train.pkl", "rb") as processed_file:
     caps, objs, labels = pickle.load(processed_file)
@@ -104,7 +104,7 @@ num_batches = len(caps)
 
 print("loaded data")
 
-model = EmbAttLSTM(NUM_WORDS, EMB_SIZE, HIDDEN_SIZE, BATCH_SIZE, MAX_LEN)
+model = NoCapLSTM(NUM_WORDS, EMB_DIM, HIDDEN_SIZE, BATCH_SIZE)
 
 loss_fn = torch.nn.MSELoss(size_average=False)
 optimizer = torch.optim.Adam(model.parameters(), lr=LEARNING_RATE)
@@ -138,4 +138,4 @@ for epoch in range(NUM_EPOCHS):
             print("epoch:", epoch, "batch:", i, "out of", num_batches)
         i += 1
 
-torch.save(model.state_dict(), "../../../logs/base_lstm_classification/models/activations/emb_att.pt")
+torch.save(model.state_dict(), "../../../logs/base_lstm_classification/models/activations/no_cap.pt")

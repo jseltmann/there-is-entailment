@@ -3,18 +3,26 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 
-class AttLSTM(nn.Module):
+class StackedLSTM(nn.Module):
 
-    def __init__(self, input_size=1, hidden_size=100, batch_size=64, max_len=25):
-        super(AttLSTM, self).__init__()
+    def __init__(self, num_words=10000, emb_size=100, hidden_size=100, batch_size=64, max_len=25):
+        super(StackedLSTM, self).__init__()
         self.hidden_size = hidden_size
         self.batch_size = batch_size
         self.max_len = max_len
+        self.emb_size = emb_size
         
-        self.caption_lstm = nn.LSTM(input_size,
+        self.embedding = nn.Embedding(num_words, self.emb_size)
+        self.caption_lstm1 = nn.LSTM(self.emb_size,
                                     self.hidden_size,
                                     bidirectional=True)
-        self.object_lstm = nn.LSTM(input_size,
+        self.caption_lstm2 = nn.LSTM(self.hidden_size * 2,
+                                    self.hidden_size,
+                                    bidirectional=True)
+        self.caption_lstm3 = nn.LSTM(self.hidden_size * 2,
+                                    self.hidden_size,
+                                    bidirectional=True)
+        self.object_lstm = nn.LSTM(self.emb_size,
                                    self.hidden_size,
                                    bidirectional=True)
 
@@ -22,10 +30,22 @@ class AttLSTM(nn.Module):
 
         self.linear1 = nn.Linear(2 * self.hidden_size, 2 * self.hidden_size)
         self.linear2 = nn.Linear(2 * self.hidden_size, 2)
+
         self.softmax = nn.Softmax(dim=1)
 
     def forward(self, caption, obj):
-        cap_steps, (h_cap, _) = self.caption_lstm(caption)
+        caption = caption.long()
+        caption = self.embedding(caption)
+        caption = torch.squeeze(caption)
+
+        cap_steps, (h_cap, _) = self.caption_lstm1(caption)
+        cap_steps, (h_cap, _) = self.caption_lstm2(cap_steps)
+        cap_steps, (h_cap, _) = self.caption_lstm3(cap_steps)
+        
+
+        obj = obj.long()
+        obj = self.embedding(obj)
+        obj = obj.squeeze(2)
         _, (h_obj, _) = self.object_lstm(obj)
 
         # h_cap is tuple, since bidirectional lstm
@@ -43,10 +63,11 @@ class AttLSTM(nn.Module):
         att_weights = att_weights[sent_len-1,:,:]
         att_applied = att_weights * cap_steps
 
-        h_sum = torch.sum(att_applied, 0) / sent_len
+        h_sum = torch.sum(att_applied, 0)
 
         l1 = torch.tanh(self.linear1(h_sum))
-        out = self.softmax(self.linear2(l1))
+        l2 = self.linear2(l1)
+        out = self.softmax(l2)
 
         return out
 
