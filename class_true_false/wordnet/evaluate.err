@@ -1,0 +1,7 @@
+nohup: ignoring input
+Traceback (most recent call last):
+  File "evaluate_basic_model.py", line 92, in <module>
+    "../../logs/base_lstm_classification/eval_results/2019-08-01-2lin_easy_train.log")
+  File "evaluate_basic_model.py", line 30, in evaluate_base_lstm
+    with open(dev_path, "rb") as f:
+FileNotFoundError: [Errno 2] No such file or directory: '../../data/bert_classify_thereis_5caps_seed0/lstm_preprocessed_test.pkl'

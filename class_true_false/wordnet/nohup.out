@@ -1,0 +1,46 @@
+[nltk_data] Downloading package punkt to
+[nltk_data]     /home/users/ortland/nltk_data...
+[nltk_data]   Package punkt is already up-to-date!
+[nltk_data] Downloading package wordnet to
+[nltk_data]     /home/users/ortland/nltk_data...
+[nltk_data]   Package wordnet is already up-to-date!
+train_basic_model.py:73: UserWarning: To copy construct from a tensor, it is recommended to use sourceTensor.clone().detach() or sourceTensor.clone().detach().requires_grad_(True), rather than torch.tensor(sourceTensor).
+  dists_val = torch.tensor(dists_val)
+/home/users/ortland/anaconda3/lib/python3.7/site-packages/torch/nn/_reduction.py:49: UserWarning: size_average and reduce args will be deprecated, please use reduction='sum' instead.
+  warnings.warn(warning.format(ret))
+read 50000 training examples
+read 100000 training examples
+read 150000 training examples
+read 200000 training examples
+read 250000 training examples
+read 300000 training examples
+read 350000 training examples
+read 400000 training examples
+read 450000 training examples
+read 500000 training examples
+read 550000 training examples
+read 600000 training examples
+read 650000 training examples
+read 700000 training examples
+read 750000 training examples
+read 800000 training examples
+read 850000 training examples
+read 900000 training examples
+read 950000 training examples
+read 1000000 training examples
+read 1050000 training examples
+read 1100000 training examples
+read 1150000 training examples
+loaded data
+epoch: 0 batch: 0 out of 18175
+epoch: 0 batch: 5000 out of 18175
+epoch: 0 batch: 10000 out of 18175
+epoch: 0 batch: 15000 out of 18175
+epoch: 1 batch: 0 out of 18175
+epoch: 1 batch: 5000 out of 18175
+epoch: 1 batch: 10000 out of 18175
+epoch: 1 batch: 15000 out of 18175
+epoch: 2 batch: 0 out of 18175
+epoch: 2 batch: 5000 out of 18175
+epoch: 2 batch: 10000 out of 18175
+epoch: 2 batch: 15000 out of 18175
